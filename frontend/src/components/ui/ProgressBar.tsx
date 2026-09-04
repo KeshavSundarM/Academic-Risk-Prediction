@@ -1,0 +1,1 @@
+export function ProgressBar({ value, color = '#5b5bd6', showValue = true }: { value: number; color?: string; showValue?: boolean }) { return <div className="progress-row"><div className="progress-track"><span style={{ width: `${Math.min(100, value)}%`, background: color }} /></div>{showValue && <strong>{value}%</strong>}</div>; }

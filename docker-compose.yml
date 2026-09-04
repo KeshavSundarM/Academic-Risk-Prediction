@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: edurisk
+      POSTGRES_PASSWORD: edurisk
+      POSTGRES_DB: edurisk
+    ports: ["5432:5432"]
+    volumes: ["postgres_data:/var/lib/postgresql/data", "./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro"]
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U edurisk -d edurisk"], interval: 5s, timeout: 5s, retries: 10}
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    volumes: ["redis_data:/data"]
+  backend:
+    build: ./backend
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://edurisk:edurisk@postgres:5432/edurisk
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: change-me-in-production
+      NODE_ENV: development
+      ALLOW_DEMO_FALLBACK: "true"
+      CORS_ORIGIN: http://localhost:5173
+    ports: ["4000:4000"]
+    depends_on: { postgres: { condition: service_healthy }, redis: { condition: service_started } }
+  frontend:
+    build: ./frontend
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:4000
+    ports: ["5173:5173"]
+    depends_on: [backend]
+volumes:
+  postgres_data:
+  redis_data:
